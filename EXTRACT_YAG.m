@@ -56,14 +56,15 @@ if isscan
     % allocate pulse_id
     pulse_id = zeros(n_shot,n_step);
     
+    % get bg
+    back = uint16(rot90(d(1).cam_back.YAG.img,2));
+    backs = repmat(back,[1,1,n_shot]);
+    
     % get image data
     for i = 1:n_step
         
         % read images
         [im_dat,~,pulse_id(:,i)] = E200_readImages(scan_info(i).YAG);
-        % get bg
-        back = uint16(rot90(d(1).cam_back.YAG.img,2));
-        backs = repmat(back,[1,1,size(im_dat,3)]);
         
         % orient images and subtract bg
         im_dat = flipdim(flipdim(im_dat,2),1) - backs;

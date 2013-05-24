@@ -1,4 +1,4 @@
-function data = load_E200_data(path_file,head,isscan,doyag)
+function data = load_E200_data(path_file,head,isscan,doyag,doceloss,docegain)
 
 % load data containing filenames
 load(path_file);
@@ -167,3 +167,60 @@ if doyag
     end
 end
     
+if docegain
+    
+    data.CEGAIN = EXTRACT_CEGAIN(path_file,head,isscan);
+    data.CEGAIN.EPID_ind = zeros(n_shot,n_step);
+    data.CEGAIN.py_sort  = zeros(n_shot,n_step);
+    data.CEGAIN.py_ind   = zeros(n_shot,n_step);
+    data.epics.IPID_ind = zeros(max_epics_shots,n_step);
+    if aida_daq
+        data.CEGAIN.APID_ind = zeros(n_shot,n_step);
+        data.aida.IPID_ind = zeros(n_shot,n_step);
+    end
+    
+    for i=1:n_step
+        
+        [~,IA,IB] = intersect(data.epics.PATT_SYS1_1_PULSEID(:,i),data.CEGAIN.pulse_id(:,i),'rows','stable');
+        data.CEGAIN.EPID_ind(IB,i) = IA;
+        data.epics.IPID_ind(IA,i) = IB;
+        data.CEGAIN.py_sort(:,i) = data.epics.py_sort(IA,i);
+        [~,~,IB] = intersect(data.epics.PATT_SYS1_1_PULSEID(data.epics.py_sort(1:data.epics_shots(i),i),i),data.CEGAIN.pulse_id(:,i),'rows','stable');        
+        data.CEGAIN.py_ind(:,i) = IB;
+        if aida_daq
+            [~,IA,IB] = intersect(data.aida.pulse_id(:,i),data.CEGAIN.pulse_id(:,i),'rows','stable');
+            data.CEGAIN.APID_ind(IB,i) = IA;
+            data.aida.IPID_ind(IA,i) = IB;
+        end
+    end
+    
+end
+    
+if doceloss
+    
+    data.CELOSS = EXTRACT_CELOSS(path_file,head,isscan);
+    data.CELOSS.EPID_ind = zeros(n_shot,n_step);
+    data.CELOSS.py_sort  = zeros(n_shot,n_step);
+    data.CELOSS.py_ind   = zeros(n_shot,n_step);
+    data.epics.IPID_ind = zeros(max_epics_shots,n_step);
+    if aida_daq
+        data.CELOSS.APID_ind = zeros(n_shot,n_step);
+        data.aida.IPID_ind = zeros(n_shot,n_step);
+    end
+    
+    for i=1:n_step
+        
+        [~,IA,IB] = intersect(data.epics.PATT_SYS1_1_PULSEID(:,i),data.CELOSS.pulse_id(:,i),'rows','stable');
+        data.CELOSS.EPID_ind(IB,i) = IA;
+        data.epics.IPID_ind(IA,i) = IB;
+        data.CELOSS.py_sort(:,i) = data.epics.py_sort(IA,i);
+        [~,~,IB] = intersect(data.epics.PATT_SYS1_1_PULSEID(data.epics.py_sort(1:data.epics_shots(i),i),i),data.CELOSS.pulse_id(:,i),'rows','stable');        
+        data.CELOSS.py_ind(:,i) = IB;
+        if aida_daq
+            [~,IA,IB] = intersect(data.aida.pulse_id(:,i),data.CELOSS.pulse_id(:,i),'rows','stable');
+            data.CELOSS.APID_ind(IB,i) = IA;
+            data.aida.IPID_ind(IA,i) = IB;
+        end
+    end
+    
+end
