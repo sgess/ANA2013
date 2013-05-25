@@ -1,4 +1,4 @@
-function [eta_max, eta_cent, eta_fmin, eta_fmax] = DISPANA(data)
+function [eta_max, eta_cent, eta_fmin, eta_fmax] = DISPANA(data,save_dir,savE)
 
 lineouts = data.YAG.spectra;
 line_out = squeeze(mean(data.YAG.spectra,2));
@@ -57,12 +57,11 @@ legend('Spectrum Maximum','Spectrum Centroid','FWHM Low','FWHM High','location',
 hold on;
 plot(delta,max_fit,'k:',delta,cent_fit,'r:',delta,fmin_fit,'g:',delta,fmax_fit,'c:');
 hold off;
-%plot(delta,x_max,'k*',delta,max_fit,'g',delta,cent_spec,'r*',delta,cent_fit,'b');
-%legend('Spectrum Maximum','Dispersion fit to Max','Spectrum Centroid','Dispersion fit to Centroid','location','northwest');
 xlabel('\delta','fontsize',14);
 ylabel('X (mm)','fontsize',14);
 title(['\eta_{max} = ' num2str(eta_max,'%0.2f') ', \eta_{cent} = ' num2str(eta_cent,'%0.2f') ...
     ', \eta_{low} = ' num2str(eta_fmin,'%0.2f') ', \eta_{high} = ' num2str(eta_fmax,'%0.2f')],'fontsize',16);
+if savE; saveas(gca,[save_dir 'yag_disp.pdf']); end;
 
 shots = length(data.aida.EPID_ind);
 
@@ -122,7 +121,6 @@ ex_2445_fit = pex_2445(1)*delta.^2 + pex_2445(2)*delta + pex_2445(3);
 
 figure(2);
 subplot(2,1,1);
-%plot(de(:),Sx_max(:),'k*',delta,Smax_fit,'g',de(:),Scent_spec(:),'r*',delta,Scent_fit,'b');
 plot(de(:),Sx_max(:),'k*',de(:),Scent_spec(:),'r*',de(:),Sx_fmin(:),'g*',de(:),Sx_fmax(:),'c*');
 l=legend('SYAG Max','SYAG Cent','SYAG FWHM Lo','SYAG FWHM Hi','location','northwest');
 hold on;
@@ -132,9 +130,7 @@ xlabel('\delta','fontsize',14);
 ylabel('X (mm)','fontsize',14);
 title(['Fit to YAG Data: \eta_{max} = ' num2str(Seta_max,'%0.2f') ', \eta_{cent} = ' num2str(Seta_cent,'%0.2f')...
     ', \eta_{low} = ' num2str(Seta_fmin,'%0.2f') ', \eta_{high} = ' num2str(Seta_fmax,'%0.2f')],'fontsize',16);
-%l=legend('SYAG Max','SYAG Max fit','SYAG Cent','SYAG Cent fit');
-%%set(l,'fontsize',16);
-%set(l,'location','northwest');
+
 
 
 subplot(2,1,2);
@@ -147,5 +143,4 @@ xlabel('\delta','fontsize',14);
 ylabel('X (mm)','fontsize',14);
 title(['Fit to BPM Data: \eta_{2050} = ' num2str(pax_2050(2),'%0.2f') ', \eta_{2445a} = ' num2str(pax_2445(2),'%0.2f')...
     ', \eta_{2445e} = ' num2str(pex_2445(2),'%0.2f')],'fontsize',16);
-%set(l,'fontsize',16);
-%set(l,'location','northwest');
+if savE; saveas(gca,[save_dir 'bpm_disp.pdf']); end;

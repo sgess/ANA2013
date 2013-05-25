@@ -47,14 +47,22 @@ if isscan
     PixLim(4) = round(LineLim(4)*1000/res)+x_ctr;
     
     % create lineout axis
-    x_line = xx(PixLim(3):PixLim(4));
+    x_line = xx(PixLim(3):PixLim(4))';
     N_pix = length(x_line);
     
     % allocate image matrices
-    lineouts = zeros(N_pix,n_shot,n_step);
+    lineouts = zeros(N_pix,n_shot*n_step);
     
     % allocate pulse_id
-    pulse_id = zeros(n_shot,n_step);
+    pulse_id = zeros(n_shot*n_step,1);
+    pix_sum = zeros(n_shot*n_step,1);
+    fwhms = zeros(n_shot*n_step,1);
+    x_lo = zeros(n_shot*n_step,1);
+    x_hi = zeros(n_shot*n_step,1);
+    x_max = zeros(n_shot*n_step,1);
+    x_cent = zeros(n_shot*n_step,1);
+    x_rms = zeros(n_shot*n_step,1);
+    scan_val = zeros(n_shot*n_step,1);
     
     % get bg
     back = uint16(rot90(d(1).cam_back.YAG.img,2));
@@ -63,16 +71,34 @@ if isscan
     % get image data
     for i = 1:n_step
         
+        start_ind = (i-1)*n_shot;
+        end_ind = i*n_shot;
+        
+        % fill in scan value
+        scan_val((start_ind+1):end_ind) = scan_info(i).Control_PV;
+        
         % read images
-        [im_dat,~,pulse_id(:,i)] = E200_readImages(scan_info(i).YAG);
+        [im_dat,~,pulse_id((start_ind+1):end_ind)] = E200_readImages(scan_info(i).YAG);
         
         % orient images and subtract bg
         im_dat = flipdim(flipdim(im_dat,2),1) - backs;
         
+        % sum pixels
+        pix_sum((start_ind+1):end_ind) = sum(sum(im_dat));
+        
         % all line outs
         lines = squeeze(mean(im_dat(PixLim(2):PixLim(1),PixLim(3):PixLim(4),:),1));
-        lineouts(:,:,i) = lines;
+        lineouts(:,(start_ind+1):end_ind) = lines;
         
+        for j = 1:n_shot
+            [fwhms(start_ind+j),low_i,high_i] = FWHM(x_line,lineouts(:,start_ind+j));
+            x_lo(start_ind+j) = x_line(low_i);            
+            x_hi(start_ind+j) = x_line(high_i);            
+            [~,max_pos] = max(lineouts(:,start_ind+j));
+            x_max(start_ind+j) = x_line(max_pos);
+            x_cent(start_ind+j) = sum(x_line.*lineouts(:,start_ind+j))./sum(lineouts(:,start_ind+j));
+            x_rms(start_ind+j) = sqrt(sum(lineouts(:,start_ind+j).*(x_line - x_cent(start_ind+j)).^2.)/sum(lineouts(:,start_ind+j)));
+        end
         % all image data
         clear('im_dat');
         
@@ -80,6 +106,14 @@ if isscan
     
 end
 
-YAG.spectra = lineouts;
+YAG.spectra  = lineouts;
 YAG.pulse_id = pulse_id;
-YAG.axis = x_line';
+YAG.axis     = x_line;
+YAG.pix_sum  = pix_sum;
+YAG.fwhms    = fwhms;
+YAG.x_lo     = x_lo;
+YAG.x_hi     = x_hi;
+YAG.x_max    = x_max;
+YAG.x_cent   = x_cent;
+YAG.x_rms    = x_rms;
+YAG.scan_val = scan_val;
