@@ -1,17 +1,16 @@
 clear all;
-disp = '/Volumes/PWFA 4big/nas/nas-li20-pm01/E200/2013/20130428/E200_10783/E200_10783_scan_info.mat';
-ar_qs = '/Volumes/PWFA 4big/nas/nas-li20-pm01/E200/2013/20130428/E200_10794/E200_10794_scan_info.mat';
-pr = '/Volumes/PWFA 4big/nas/nas-li20-pm01/E200/2013/20130514/E200_11159/E200_11159_scan_info.mat';
+disp = '/nas/nas-li20-pm01/E200/2013/20130428/E200_10783/';
+ar_qs = '/nas/nas-li20-pm01/E200/2013/20130428/E200_10794/';
+pr = '/nas/nas-li20-pm01/E200/2013/20130514/E200_11159/';
 
 save_dir = '/Users/sgess/Desktop/plots/2013/April28/';
 
 head = '/Volumes/PWFA 4big';
-isscan = 1;
 doyag = 1;
-doceloss = 1;
-docegain = 1;
+doceloss = 0;
+docegain = 0;
 
-data = load_E200_data(ar_qs,head,isscan,doyag,doceloss,docegain);
+data = load_E200_data(ar_qs,head,doyag,doceloss,docegain);
  
 savE = 1;
 %[eta_max, eta_cent, eta_fmin, eta_fmax] = DISPANA(data,save_dir,savE);
