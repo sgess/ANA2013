@@ -1,25 +1,28 @@
-function AIDA = EXTRACT_AIDA(d,n_step,n_shot,DAQ_info,isscan)
+function AIDA = EXTRACT_AIDA(d,n_step,n_shot,scan_val,scan_pv)
 
-AIDA.pulse_id = zeros(n_shot,n_step);
-AIDA.EPID_ind = zeros(n_shot,n_step);
-AIDA.py_sort  = zeros(n_shot,n_step);
-AIDA.py_ind   = zeros(n_shot,n_step);
+pulse_id = zeros(n_shot*n_step,1);
 
 N_bpms = length(d(1).aida_data(1).bpms);
 N_toro = length(d(1).aida_data(1).toro);
 N_klys = length(d(1).aida_data(1).klys);
 
+bpms_names = cell(n_shot*n_step,N_bpms);
+bpms_x = zeros(n_shot*n_step,N_bpms);
+bpms_y = zeros(n_shot*n_step,N_bpms);
+bpms_tmit = zeros(n_shot*n_step,N_bpms);
+bpms_stat = zeros(n_shot*n_step,N_bpms);
+bpms_good = zeros(n_shot*n_step,N_bpms);
 % loop over BPMs
 for i = 1:N_bpms
-    name = d(1).aida_data(1).bpms(i).name;
-    bpms_name{i} = regexprep(name, ':', '_');
-    data.aida.(bpms_name{i}).x = zeros(n_shot,n_step);
-    data.aida.(bpms_name{i}).y = zeros(n_shot,n_step);
-    data.aida.(bpms_name{i}).tmit = zeros(n_shot,n_step);
-    data.aida.(bpms_name{i}).stat = zeros(n_shot,n_step);
-    data.aida.(bpms_name{i}).good = zeros(n_shot,n_step);
+    bpms_name(i) = d(1).aida_data(1).bpms(i).name;
 end
 
+toro_names = cell(n_shot*n_step,N_bpms);
+toro_x = zeros(n_shot*n_step,N_bpms);
+toro_y = zeros(n_shot*n_step,N_bpms);
+toro_tmit = zeros(n_shot*n_step,N_bpms);
+toro_stat = zeros(n_shot*n_step,N_bpms);
+toro_good = zeros(n_shot*n_step,N_bpms);
 % loop over Toros
 for i = 1:N_toro
     name = d(1).aida_data(1).toro(i).name;
@@ -60,3 +63,4 @@ for i=1:n_step
     end
 end
 
+AIDA.pulse_id = pulse_id;

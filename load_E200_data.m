@@ -1,4 +1,4 @@
-function data = load_E200_data(path,head,doYAG,doCELOSS,doCEGAIN)
+function data = load_E200_data(path,head,doYAG)
 
 % locate data
 data_path = [head path];
@@ -38,113 +38,53 @@ elseif ~isscan && length(d) ~= 1
     error('Number of image files and .mat files not equal');
 end
 
-% get information of scan length and number of shots
+% get information of scan length, number of shots, and camera backgrounds
 n_step = length(d);
 n_shot = d(1).param.n_shot;
+backgrounds = d(1).cam_back;
 
+% get camera paths and scan info
+scan_val = zeros(n_step,1);
+scan_pv  = cell(n_step,1);
+cams = d(1).param.cams(:,1);
+for i = 1:length(cams)
+    for j = 1:n_step
+        if isscan
+            cam_files.(cams{i}){j} = [head DAQ_info.scan_info(j).(cams{i})];
+            scan_val(j) = DAQ_info.scan_info(j).Control_PV;
+            scan_pv(j) = DAQ_info.scan_info(j).Control_PV_name;
+        else
+            cam_files.(cams{i}){j} = [head DAQ_info.filenames.(cams{i})];
+            scan_val(j) = 0;
+            scan_pv = '';
+        end
+    end
+end
+        
 % extract EPICS data
-data.EPICS = EXTRACT_EPICS(d,n_step,DAQ_info,isscan);
+data.EPICS = EXTRACT_EPICS(d,n_step,scan_val,scan_pv);
 
 % extract AIDA data
 if d(1).param.aida_daq
-    data.AIDA = EXTRACT_AIDA(d,n_step,n_shot,DAQ_info,isscan);
+    data.AIDA = EXTRACT_AIDA(d,n_step,n_shot,scan_val,scan_pv);
 end
 
-    % find matched pulse id indices
-%     for i=1:n_step
-%         [~,IA,IB] = intersect(data.epics.PATT_SYS1_1_PULSEID(:,i),data.aida.pulse_id(:,i),'rows','stable');
-%         data.aida.EPID_ind(:,i) = IA;
-%         data.epics.APID_ind(IA,i) = IB;
-%         
-%         data.aida.py_sort(:,i) = data.epics.py_sort(IA,i);
-%         [~,~,IB] = intersect(data.epics.PATT_SYS1_1_PULSEID(data.epics.py_sort(1:data.epics_shots(i),i),i),data.aida.pulse_id(:,i),'rows','stable');        
-%         data.aida.py_ind(:,i) = IB;
-% 
-%     end
-
+% extract YAG data
 if doYAG
-    
-    data.YAG = EXTRACT_YAG(path_file,head,isscan);
-    
-    data.YAG.EPID_ind = zeros(n_shot,n_step);
-    data.YAG.py_sort  = zeros(n_shot,n_step);
-    data.YAG.py_ind   = zeros(n_shot,n_step);
-    data.epics.IPID_ind = zeros(max_epics_shots,n_step);
-    if aida_daq
-        data.YAG.APID_ind = zeros(n_shot,n_step);
-        data.aida.IPID_ind = zeros(n_shot,n_step);
-    end
-    
-    for i=1:n_step
-        
-        [~,IA,IB] = intersect(data.epics.PATT_SYS1_1_PULSEID(:,i),data.YAG.pulse_id(:,i),'rows','stable');
-        data.YAG.EPID_ind(IB,i) = IA;
-        data.epics.IPID_ind(IA,i) = IB;
-        data.YAG.py_sort(:,i) = data.epics.py_sort(IA,i);
-        [~,~,IB] = intersect(data.epics.PATT_SYS1_1_PULSEID(data.epics.py_sort(1:data.epics_shots(i),i),i),data.YAG.pulse_id(:,i),'rows','stable');        
-        data.YAG.py_ind(:,i) = IB;
-        if aida_daq
-            [~,IA,IB] = intersect(data.aida.pulse_id(:,i),data.YAG.pulse_id(:,i),'rows','stable');
-            data.YAG.APID_ind(IB,i) = IA;
-            data.aida.IPID_ind(IA,i) = IB;
-        end
-    end
+    data.YAG = EXTRACT_YAG(cam_files,backgrounds,n_step,n_shot,scan_val,scan_pv);
 end
-    
-if doCEGAIN
-    
-    data.CEGAIN = EXTRACT_CEGAIN(path_file,head,isscan);
-    data.CEGAIN.EPID_ind = zeros(n_shot,n_step);
-    data.CEGAIN.py_sort  = zeros(n_shot,n_step);
-    data.CEGAIN.py_ind   = zeros(n_shot,n_step);
-    data.epics.IPID_ind = zeros(max_epics_shots,n_step);
-    if aida_daq
-        data.CEGAIN.APID_ind = zeros(n_shot,n_step);
-        data.aida.IPID_ind = zeros(n_shot,n_step);
-    end
-    
-    for i=1:n_step
-        
-        [~,IA,IB] = intersect(data.epics.PATT_SYS1_1_PULSEID(:,i),data.CEGAIN.pulse_id(:,i),'rows','stable');
-        data.CEGAIN.EPID_ind(IB,i) = IA;
-        data.epics.IPID_ind(IA,i) = IB;
-        data.CEGAIN.py_sort(:,i) = data.epics.py_sort(IA,i);
-        [~,~,IB] = intersect(data.epics.PATT_SYS1_1_PULSEID(data.epics.py_sort(1:data.epics_shots(i),i),i),data.CEGAIN.pulse_id(:,i),'rows','stable');        
-        data.CEGAIN.py_ind(:,i) = IB;
-        if aida_daq
-            [~,IA,IB] = intersect(data.aida.pulse_id(:,i),data.CEGAIN.pulse_id(:,i),'rows','stable');
-            data.CEGAIN.APID_ind(IB,i) = IA;
-            data.aida.IPID_ind(IA,i) = IB;
-        end
-    end
-    
-end
-    
-if doCELOSS
-    
-    data.CELOSS = EXTRACT_CELOSS(path_file,head,isscan);
-    data.CELOSS.EPID_ind = zeros(n_shot,n_step);
-    data.CELOSS.py_sort  = zeros(n_shot,n_step);
-    data.CELOSS.py_ind   = zeros(n_shot,n_step);
-    data.epics.IPID_ind = zeros(max_epics_shots,n_step);
-    if aida_daq
-        data.CELOSS.APID_ind = zeros(n_shot,n_step);
-        data.aida.IPID_ind = zeros(n_shot,n_step);
-    end
-    
-    for i=1:n_step
-        
-        [~,IA,IB] = intersect(data.epics.PATT_SYS1_1_PULSEID(:,i),data.CELOSS.pulse_id(:,i),'rows','stable');
-        data.CELOSS.EPID_ind(IB,i) = IA;
-        data.epics.IPID_ind(IA,i) = IB;
-        data.CELOSS.py_sort(:,i) = data.epics.py_sort(IA,i);
-        [~,~,IB] = intersect(data.epics.PATT_SYS1_1_PULSEID(data.epics.py_sort(1:data.epics_shots(i),i),i),data.CELOSS.pulse_id(:,i),'rows','stable');        
-        data.CELOSS.py_ind(:,i) = IB;
-        if aida_daq
-            [~,IA,IB] = intersect(data.aida.pulse_id(:,i),data.CELOSS.pulse_id(:,i),'rows','stable');
-            data.CELOSS.APID_ind(IB,i) = IA;
-            data.aida.IPID_ind(IA,i) = IB;
-        end
-    end
-    
-end
+
+% match pulseid
+i_lo = data.EPICS.PATT_SYS1_1_PULSEID(1:(end-1));
+i_hi = data.EPICS.PATT_SYS1_1_PULSEID(2:end);
+k = find(i_hi < i_lo,1,'first');
+pid_lo = data.EPICS.PATT_SYS1_1_PULSEID(1:k);
+pid_hi = data.EPICS.PATT_SYS1_1_PULSEID((k+1):end);
+y_lo = data.YAG.pulse_id(1:(end-1));
+y_hi = data.YAG.pulse_id(2:end);
+j = find(y_hi < y_lo,1,'first');
+yid_lo = data.YAG.pulse_id(1:j);
+yid_hi = data.YAG.pulse_id((j+1):end);
+[~,~,ib_lo] = intersect(yid_lo,pid_lo);
+[~,~,ib_hi] = intersect(yid_hi,pid_hi);
+data.YAG.epics_index = [ib_lo; ib_hi+k];

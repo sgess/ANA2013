@@ -5,12 +5,14 @@ pr = '/nas/nas-li20-pm01/E200/2013/20130514/E200_11159/';
 
 save_dir = '/Users/sgess/Desktop/plots/2013/April28/';
 
-head = '/Volumes/PWFA 4big';
+%head = '/Volumes/PWFA 4big';
+head = '/Users/sgess/Desktop/FACET/2013/DATA';
+
 doyag = 1;
 doceloss = 0;
 docegain = 0;
 
-data = load_E200_data(ar_qs,head,doyag,doceloss,docegain);
+data = load_E200_data(ar_qs,head,doyag);
  
 savE = 1;
 %[eta_max, eta_cent, eta_fmin, eta_fmax] = DISPANA(data,save_dir,savE);
