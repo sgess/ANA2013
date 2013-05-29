@@ -1,4 +1,4 @@
-function YAG = EXTRACT_YAG(cam_files,backgrounds,n_step,n_shot,control_val,control_pv)
+function YAG = EXTRACT_YAG(cam_files,backgrounds,n_step,n_shot,control_val,control_pv,data_set)
     
 % Get YAG information
 res = 9.62;
@@ -40,6 +40,9 @@ x_cent = zeros(n_shot*n_step,1);
 x_rms = zeros(n_shot*n_step,1);
 scan_val = zeros(n_shot*n_step,1);
 scan_pv  = cell(n_shot*n_step,1);
+scan_step = zeros(n_shot*n_step,1);
+dataset = zeros(n_shot*n_step,1);
+dataset(:) = data_set;
 
 % get bg
 back = uint16(rot90(backgrounds.YAG.img,2));
@@ -54,6 +57,7 @@ for i = 1:n_step
     % fill in scan value
     scan_val((start_ind+1):end_ind) = control_val(i);
     scan_pv((start_ind+1):end_ind) = control_pv(i);
+    scan_step((start_ind+1):end_ind) = i;
     
     % read images
     [im_dat,~,pulse_id((start_ind+1):end_ind)] = E200_readImages(cam_files.YAG{i});
@@ -95,3 +99,6 @@ YAG.x_max    = x_max;
 YAG.x_cent   = x_cent;
 YAG.x_rms    = x_rms;
 YAG.scan_val = scan_val;
+YAG.scan_pv  = scan_pv;
+YAG.scan_step= scan_step;
+YAG.dataset  = dataset;

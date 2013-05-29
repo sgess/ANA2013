@@ -1,4 +1,4 @@
-function EPICS = EXTRACT_EPICS(d,n_step,scan_val,scan_pv)
+function EPICS = EXTRACT_EPICS(d,n_step,scan_val,scan_pv,dataset_ID)
 
 % loop over data structure and determine number of epics shots
 epics_shots = zeros(n_step,1);
@@ -20,7 +20,11 @@ for i = 1:N_epics_var
 end
 
 EPICS.scan_val = zeros(tot_epics_shots,1);
+EPICS.dataset = zeros(tot_epics_shots,1);
+EPICS.dataset(:) = dataset_ID;
 EPICS.scan_pv  = cell(tot_epics_shots,1);
+EPICS.scan_step = zeros(tot_epics_shots,1);
+
 shots = [0; cumsum(epics_shots)];
 % assign epics data
 for i=1:n_step
@@ -29,6 +33,7 @@ for i=1:n_step
     end_ind = shots(i+1);
     EPICS.scan_val((start_ind+1):end_ind) = scan_val(i);
     EPICS.scan_pv((start_ind+1):end_ind) = scan_pv(i);
+    EPICS.scan_step((start_ind+1):end_ind) = i;
     
     for j=1:epics_shots(i)
         for k=1:N_epics_var       

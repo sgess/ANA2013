@@ -1,5 +1,4 @@
 clear all;
-disp = '/nas/nas-li20-pm01/E200/2013/20130428/E200_10783/';
 ar_qs = '/nas/nas-li20-pm01/E200/2013/20130428/E200_10794/';
 pr = '/nas/nas-li20-pm01/E200/2013/20130514/E200_11159/';
 
@@ -14,7 +13,39 @@ docegain = 0;
 
 data = load_E200_data(ar_qs,head,doyag);
  
-savE = 1;
+EPICS_PID = data.EPICS.PATT_SYS1_1_PULSEID;
+EPICS_SCANSTEP = data.EPICS.scan_step;
+EPICS_DATASET = data.EPICS.dataset;
+IMAGE_PID = data.YAG.pulse_id;
+IMAGE_SCANSTEP = data.YAG.scan_step;
+
+[data.EPICS.UID, data.YAG.UID] = assign_UID(EPICS_PID,EPICS_SCANSTEP,EPICS_DATASET,IMAGE_PID,IMAGE_SCANSTEP);
+[~,ii,ie] = intersect(data.YAG.UID,data.EPICS.UID);
+isequal(data.EPICS.PATT_SYS1_1_PULSEID(ie),data.YAG.pulse_id(ii))
+%%
+clear all;
+disp = '/nas/nas-li20-pm01/E200/2013/20130428/E200_10783/';
+head = '/Volumes/PWFA 4big';
+doyag = 1;
+data = load_E200_data(disp,head,doyag);
+
+EPICS_PID = data.EPICS.PATT_SYS1_1_PULSEID;
+EPICS_SCANSTEP = data.EPICS.scan_step;
+EPICS_DATASET = data.EPICS.dataset;
+IMAGE_PID = data.YAG.pulse_id;
+IMAGE_SCANSTEP = data.YAG.scan_step;
+AIDA_PID = data.AIDA.pulse_id;
+AIDA_SCANSTEP = data.AIDA.scan_step;
+
+[data.EPICS.UID, data.YAG.UID, data.AIDA.UID] = assign_UID(EPICS_PID,EPICS_SCANSTEP,EPICS_DATASET,IMAGE_PID,IMAGE_SCANSTEP,AIDA_PID,AIDA_SCANSTEP);
+[~,ii,ie] = intersect(data.YAG.UID,data.EPICS.UID);
+isequal(data.EPICS.PATT_SYS1_1_PULSEID(ie),data.YAG.pulse_id(ii))
+
+[~,ia,ie] = intersect(data.AIDA.UID,data.EPICS.UID);
+isequal(data.EPICS.PATT_SYS1_1_PULSEID(ie),data.AIDA.pulse_id(ii))
+
+
+%savE = 1;
 %[eta_max, eta_cent, eta_fmin, eta_fmax] = DISPANA(data,save_dir,savE);
 %%
 pyros = [];

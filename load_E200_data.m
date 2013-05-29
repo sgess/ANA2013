@@ -52,7 +52,7 @@ for i = 1:length(cams)
         if isscan
             cam_files.(cams{i}){j} = [head DAQ_info.scan_info(j).(cams{i})];
             scan_val(j) = DAQ_info.scan_info(j).Control_PV;
-            scan_pv(j) = DAQ_info.scan_info(j).Control_PV_name;
+            scan_pv(j) = {DAQ_info.scan_info(j).Control_PV_name};
         else
             cam_files.(cams{i}){j} = [head DAQ_info.filenames.(cams{i})];
             scan_val(j) = 0;
@@ -60,18 +60,23 @@ for i = 1:length(cams)
         end
     end
 end
-        
+
+% Get dataset ID
+[~,b] = strtok(d(1).param.save_name,'_');
+[a,~] = strtok(b,'_');
+dataset_ID = str2num(a);
+
 % extract EPICS data
-data.EPICS = EXTRACT_EPICS(d,n_step,scan_val,scan_pv);
+data.EPICS = EXTRACT_EPICS(d,n_step,scan_val,scan_pv,dataset_ID);
 
 % extract AIDA data
 if d(1).param.aida_daq
-    data.AIDA = EXTRACT_AIDA(d,n_step,n_shot,scan_val,scan_pv);
+    data.AIDA = EXTRACT_AIDA(d,n_step,n_shot,scan_val,scan_pv,dataset_ID);
 end
 
 % extract YAG data
 if doYAG
-    data.YAG = EXTRACT_YAG(cam_files,backgrounds,n_step,n_shot,scan_val,scan_pv);
+    data.YAG = EXTRACT_YAG(cam_files,backgrounds,n_step,n_shot,scan_val,scan_pv,dataset_ID);
 end
 
 % match pulseid
