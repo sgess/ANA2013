@@ -5,8 +5,8 @@ pr = '/nas/nas-li20-pm01/E200/2013/20130514/E200_11159/';
 
 save_dir = '/Users/sgess/Desktop/plots/2013/April28/';
 
-%head = '/Volumes/PWFA 4big';
-head = '/Users/sgess/Desktop/FACET/2013/DATA';
+head = '/Volumes/PWFA 4big';
+%head = '/Users/sgess/Desktop/FACET/2013/DATA';
 
 doyag = 1;
 doceloss = 0;
