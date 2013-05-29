@@ -92,4 +92,4 @@ yid_lo = data.YAG.pulse_id(1:j);
 yid_hi = data.YAG.pulse_id((j+1):end);
 [~,~,ib_lo] = intersect(yid_lo,pid_lo);
 [~,~,ib_hi] = intersect(yid_hi,pid_hi);
-data.YAG.epics_index = [ib_lo; ib_hi+k];
+%data.YAG.epics_index = [ib_lo; ib_hi+k];

@@ -1,11 +1,19 @@
 function [eta_max, eta_cent, eta_fmin, eta_fmax] = DISPANA(data,save_dir,savE)
 
+steps = length(unique(data.EPICS.scan_step));
 lineouts = data.YAG.spectra;
-line_out = squeeze(mean(data.YAG.spectra,2));
+line_out = zeros(length(data.YAG.axis),steps);
+for i = 1:steps
+    line_out(:,i) = mean(data.YAG.spectra(:,data.YAG.scan_step == i),2);
+end
+
+
 x_line = data.YAG.axis;
-steps = length(data.epics_shots);
-energy = data.energy';
+
+energy = unique(data.EPICS.scan_val);
 delta = energy/20.35e3;
+dE = data.EPICS.scan_val/20.35e3;
+dY = data.YAG.scan_val/20.35e3;
 
 % Dispersion for spectrum maximum
 [max_spec,max_pos] = max(line_out);
@@ -63,65 +71,69 @@ title(['\eta_{max} = ' num2str(eta_max,'%0.2f') ', \eta_{cent} = ' num2str(eta_c
     ', \eta_{low} = ' num2str(eta_fmin,'%0.2f') ', \eta_{high} = ' num2str(eta_fmax,'%0.2f')],'fontsize',16);
 if savE; saveas(gca,[save_dir 'yag_disp.pdf']); end;
 
-shots = length(data.aida.EPID_ind);
+%shots = length(data.aida.EPID_ind);
+%shots = length(data.YAG.EPID_ind);
+shots = length(data.YAG.pulse_id);
 
-dd = repmat(delta,1,shots);
-de = dd';
+%dd = repmat(delta,1,shots);
+%de = dd';
 
 % Dispersion for spectrum maximum
-[Smax_spec,Smax_pos] = max(lineouts,[],1);
+[~,Smax_pos] = max(lineouts,[],1);
 Smax_pos = squeeze(Smax_pos);
 Sx_max = x_line(Smax_pos);
-Sd_max = polyfit(de,Sx_max,2);
+%Sd_max = polyfit(de,Sx_max,2);
+Sd_max = polyfit(dY,Sx_max,2);
 Seta_max = Sd_max(2);
 Smax_fit = Sd_max(1)*delta.^2 + Sd_max(2)*delta + Sd_max(3);
 
 % Dispersion for spectrum centroid
-Sx_mat = repmat(x_line,[1,shots,steps]);
+Sx_mat = repmat(x_line,[1,shots]);
 Scent_spec = sum(Sx_mat.*lineouts)./sum(lineouts);
 Scent_spec = squeeze(Scent_spec);
-Sd_cent = polyfit(de,Scent_spec,2);
+Sd_cent = polyfit(dY,Scent_spec',2);
 Seta_cent = Sd_cent(2);
 Scent_fit = Sd_cent(1)*delta.^2 + Sd_cent(2)*delta + Sd_cent(3);
 
 % Dispersion for FWHM
-fwhms = zeros(shots,steps);
-low_i = zeros(shots,steps);
-high_i = zeros(shots,steps);
-for i = 1:steps
-    for j = 1:shots
-        [fwhms(j,i),low_i(j,i),high_i(j,i)] = FWHM(x_line,lineouts(:,j,i));
-    end
+fwhms = zeros(shots,1);
+low_i = zeros(shots,1);
+high_i = zeros(shots,1);
+for j = 1:shots
+    [fwhms(j),low_i(j),high_i(j)] = FWHM(x_line,lineouts(:,j));
 end
 Sx_fmin = x_line(low_i);
 Sx_fmax = x_line(high_i);
-Sd_fmin = polyfit(de,Sx_fmin,2);
-Sd_fmax = polyfit(de,Sx_fmax,2);
+Sd_fmin = polyfit(dY,Sx_fmin,2);
+Sd_fmax = polyfit(dY,Sx_fmax,2);
 Seta_fmin = Sd_fmin(2);
 Seta_fmax = Sd_fmax(2);
 Sfmin_fit = Sd_fmin(1)*delta.^2 + Sd_fmin(2)*delta + Sd_fmin(3);
 Sfmax_fit = Sd_fmax(1)*delta.^2 + Sd_fmax(2)*delta + Sd_fmax(3);
 
-ax_2050 = data.aida.BPMS_LI20_2050.x;
-ax_2445 = data.aida.BPMS_LI20_2445.x;
-ex_2445 = [];
-for i=1:steps
-    ex_2445 = [ex_2445, data.epics.BPMS_LI20_2445_X(data.YAG.EPID_ind(:,i),i)];
-end
+%ax_2050 = data.aida.BPMS_LI20_2050.x;
+%ax_2445 = data.aida.BPMS_LI20_2445.x;
+% ex_2445 = [];
+% for i=1:steps
+%     ex_2445 = [ex_2445, data.epics.BPMS_LI20_2445_X(data.YAG.EPID_ind(:,i),i)];
+% end
+[~,ii,ie] = intersect(data.YAG.UID,data.EPICS.UID);
+ex_2445 = data.EPICS.BPMS_LI20_2445_X(ie);
 
 % Dispersion from BPMs
-pax_2050=polyfit(de,ax_2050,2);
-pax_2445=polyfit(de,ax_2445,2);
-pex_2445=polyfit(de,ex_2445,2);
-ax_2050_fit = pax_2050(1)*delta.^2 + pax_2050(2)*delta + pax_2050(3);
-ax_2445_fit = pax_2445(1)*delta.^2 + pax_2445(2)*delta + pax_2445(3);
+%pax_2050=polyfit(de,ax_2050,2);
+%pax_2445=polyfit(de,ax_2445,2);
+pex_2445=polyfit(dY,ex_2445,2);
+%ax_2050_fit = pax_2050(1)*delta.^2 + pax_2050(2)*delta + pax_2050(3);
+%ax_2445_fit = pax_2445(1)*delta.^2 + pax_2445(2)*delta + pax_2445(3);
 ex_2445_fit = pex_2445(1)*delta.^2 + pex_2445(2)*delta + pex_2445(3);
 
 
 
 figure(2);
 subplot(2,1,1);
-plot(de(:),Sx_max(:),'k*',de(:),Scent_spec(:),'r*',de(:),Sx_fmin(:),'g*',de(:),Sx_fmax(:),'c*');
+%plot(de(:),Sx_max(:),'k*',de(:),Scent_spec(:),'r*',de(:),Sx_fmin(:),'g*',de(:),Sx_fmax(:),'c*');
+plot(dY,Sx_max,'k*',dY,Scent_spec,'r*',dY,Sx_fmin,'g*',dY,Sx_fmax,'c*');
 l=legend('SYAG Max','SYAG Cent','SYAG FWHM Lo','SYAG FWHM Hi','location','northwest');
 hold on;
 plot(delta,Smax_fit,'k',delta,Scent_fit,'r',delta,Sfmin_fit,'g',delta,Sfmax_fit,'c');
@@ -134,13 +146,24 @@ title(['Fit to YAG Data: \eta_{max} = ' num2str(Seta_max,'%0.2f') ', \eta_{cent}
 
 
 subplot(2,1,2);
-plot(de(:),ax_2050(:),'g*',de(:),ax_2445(:),'b*',de(:),ex_2445(:),'m*');
-l=legend('BPM 2050','BPM 2445 AIDA','BPM 2445 EPICS','location','northwest');
+plot(dY,ex_2445,'m*');
+l=legend('BPM 2445 EPICS','location','northwest');
 hold on;
-plot(delta,ax_2050_fit,'k',delta,ax_2445_fit,'r',delta,ex_2445_fit,'c');
+plot(delta,ex_2445_fit,'c');
 hold off
 xlabel('\delta','fontsize',14);
 ylabel('X (mm)','fontsize',14);
-title(['Fit to BPM Data: \eta_{2050} = ' num2str(pax_2050(2),'%0.2f') ', \eta_{2445a} = ' num2str(pax_2445(2),'%0.2f')...
-    ', \eta_{2445e} = ' num2str(pex_2445(2),'%0.2f')],'fontsize',16);
+title(['Fit to BPM Data: \eta_{2445e} = ' num2str(pex_2445(2),'%0.2f')],'fontsize',16);
 if savE; saveas(gca,[save_dir 'bpm_disp.pdf']); end;
+
+% subplot(2,1,2);
+% plot(de(:),ax_2050(:),'g*',de(:),ax_2445(:),'b*',de(:),ex_2445(:),'m*');
+% l=legend('BPM 2050','BPM 2445 AIDA','BPM 2445 EPICS','location','northwest');
+% hold on;
+% plot(delta,ax_2050_fit,'k',delta,ax_2445_fit,'r',delta,ex_2445_fit,'c');
+% hold off
+% xlabel('\delta','fontsize',14);
+% ylabel('X (mm)','fontsize',14);
+% title(['Fit to BPM Data: \eta_{2050} = ' num2str(pax_2050(2),'%0.2f') ', \eta_{2445a} = ' num2str(pax_2445(2),'%0.2f')...
+%     ', \eta_{2445e} = ' num2str(pex_2445(2),'%0.2f')],'fontsize',16);
+% if savE; saveas(gca,[save_dir 'bpm_disp.pdf']); end;
